@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 )
 
@@ -52,7 +53,7 @@ func run() error {
 		fmt.Printf("usage: %s name [path...]\n", filepath.Base(os.Args[0]))
 		return nil
 	}
-	name := []rune(flag.Arg(0))
+	name := flag.Arg(0)
 	var paths []string
 	if flag.NArg() < 2 {
 		paths = []string{"."}
@@ -60,11 +61,12 @@ func run() error {
 		paths = flag.Args()[1:]
 	}
 
+	runes := []rune(name)
 	var regexpStrs []string
-	regexpStrs = appendAddRegexpStrs(regexpStrs, name)
-	regexpStrs = appendDeleteRegexpStrs(regexpStrs, name)
-	regexpStrs = appendReplaceRegexpStrs(regexpStrs, name)
-	regexpStrs = appendTransposeRegexpStrs(regexpStrs, name)
+	regexpStrs = appendAddRegexpStrs(regexpStrs, runes)
+	regexpStrs = appendDeleteRegexpStrs(regexpStrs, runes)
+	regexpStrs = appendReplaceRegexpStrs(regexpStrs, runes)
+	regexpStrs = appendTransposeRegexpStrs(regexpStrs, runes)
 
 	var sb strings.Builder
 	sb.WriteString(`(?i)\b(?:`)
@@ -107,10 +109,29 @@ func run() error {
 			for s.Scan() {
 				line++
 				m := re.FindAllString(s.Text(), -1)
-				if m == nil {
+				if len(m) == 0 {
 					continue
 				}
-				fmt.Printf("%s:%d: %s\n", filename, line, strings.Join(m, ","))
+
+				uniqueGenuineTypos := make(map[string]struct{})
+				for _, typo := range m {
+					typo = strings.ToLower(typo)
+					if typo == name { // Remove false positives.
+						continue
+					}
+					uniqueGenuineTypos[typo] = struct{}{}
+				}
+				if len(uniqueGenuineTypos) == 0 {
+					continue
+				}
+
+				sortedTypos := make([]string, 0, len(uniqueGenuineTypos))
+				for typo := range uniqueGenuineTypos {
+					sortedTypos = append(sortedTypos, typo)
+				}
+				sort.Strings(sortedTypos)
+
+				fmt.Printf("%s:%d: %s\n", filename, line, strings.Join(sortedTypos, ","))
 			}
 			if err := s.Err(); err != nil {
 				fmt.Fprintf(os.Stderr, "%s: %s\n", filename, err)
