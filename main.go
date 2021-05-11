@@ -105,6 +105,8 @@ func run() error {
 			}
 
 			s := bufio.NewScanner(bytes.NewReader(data))
+			max := 1024 * 1024
+			s.Buffer(make([]byte, max), max)
 			line := 0
 			for s.Scan() {
 				line++
