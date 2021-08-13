@@ -1,0 +1,5 @@
+This is an example input file for findtypos. It contains a few typos.
+
+fyndtypos finds a number of minor mis-spellings of a single word, including, for
+example, the subsitution of a single letter, or the insertion of a single
+letter, like finddtypos.
