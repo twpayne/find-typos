@@ -12,6 +12,10 @@ import (
 	"strings"
 )
 
+var (
+	format = flag.String("format", "", "format (github-actions or empty)")
+)
+
 func printTyposInFile(tf *TypoFinder, path string) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -29,8 +33,15 @@ func printTyposInFile(tf *TypoFinder, path string) error {
 	for s.Scan() {
 		lineNumber++
 		if typos := tf.FindTypos(s.Text()); len(typos) > 0 {
-			if _, err := fmt.Printf("%s:%d: %s\n", path, lineNumber, strings.Join(typos, ",")); err != nil {
-				return err
+			switch *format {
+			case "github-actions":
+				if _, err := fmt.Printf("::warning file=%s,line=%d::Typo(s) of %s: %s\n", path, lineNumber, tf.word, strings.Join(typos, ",")); err != nil {
+					return err
+				}
+			default:
+				if _, err := fmt.Printf("%s:%d: %s\n", path, lineNumber, strings.Join(typos, ",")); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -45,8 +56,15 @@ func printTyposInStdin(tf *TypoFinder) error {
 	for s.Scan() {
 		lineNumber++
 		if typos := tf.FindTypos(s.Text()); len(typos) > 0 {
-			if _, err := fmt.Printf("%d: %s\n", lineNumber, strings.Join(typos, ",")); err != nil {
-				return err
+			switch *format {
+			case "github-actions":
+				if _, err := fmt.Printf("::warning line=%d::Typo(s) of %s: %s\n", lineNumber, tf.word, strings.Join(typos, ",")); err != nil {
+					return err
+				}
+			default:
+				if _, err := fmt.Printf("%d: %s\n", lineNumber, strings.Join(typos, ",")); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -54,12 +72,14 @@ func printTyposInStdin(tf *TypoFinder) error {
 }
 
 func run() error {
-	if len(os.Args) < 2 {
+	flag.Parse()
+
+	if len(flag.Args()) < 1 {
 		fmt.Printf("usage: %s word [path...]\n", filepath.Base(os.Args[0]))
 		return nil
 	}
 
-	tf, err := NewTypoFinder(os.Args[1])
+	tf, err := NewTypoFinder(flag.Arg(0))
 	if err != nil {
 		return err
 	}
@@ -69,7 +89,7 @@ func run() error {
 	}
 
 	fsys := os.DirFS(".")
-	for _, arg := range os.Args[2:] {
+	for _, arg := range flag.Args()[1:] {
 		switch info, err := os.Stat(arg); {
 		case err != nil:
 			return err
