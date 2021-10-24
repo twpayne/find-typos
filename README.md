@@ -9,7 +9,7 @@ who want to find typos of their project's name in their codebase.
 
 ## Usage
 
-    findtypos word [path...]
+    findtypos [-format=github-actions] word [path...]
 
 This will print the filename and line number of minor misspellings of *word* in
 each *path* specified.
