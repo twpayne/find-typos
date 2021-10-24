@@ -14,6 +14,7 @@ import (
 
 var (
 	format = flag.String("format", "", "format (github-actions or empty)")
+	level  = flag.String("level", "warning", "GitHub Action level (notice, warning, or error)")
 )
 
 func printTyposInFile(tf *TypoFinder, path string) error {
@@ -36,7 +37,7 @@ func printTyposInFile(tf *TypoFinder, path string) error {
 			for _, typo := range typos {
 				switch *format {
 				case "github-actions":
-					if _, err := fmt.Printf("::warning file=%s,line=%d,col=%d::%s: typo of %s\n", path, lineNumber, typo.Index+1, typo.S, tf.word); err != nil {
+					if _, err := fmt.Printf("::%s file=%s,line=%d,col=%d::%s: typo of %s\n", *level, path, lineNumber, typo.Index+1, typo.S, tf.word); err != nil {
 						return err
 					}
 				default:
@@ -61,7 +62,7 @@ func printTyposInStdin(tf *TypoFinder) error {
 			for _, typo := range typos {
 				switch *format {
 				case "github-actions":
-					if _, err := fmt.Printf("::warning line=%d,col=%d::%s: typo of %s\n", lineNumber, typo.Index+1, typo.S, tf.word); err != nil {
+					if _, err := fmt.Printf("::%s line=%d,col=%d::%s: typo of %s\n", *level, lineNumber, typo.Index+1, typo.S, tf.word); err != nil {
 						return err
 					}
 				default:
