@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"regexp"
-	"sort"
 	"strings"
 )
 
@@ -12,6 +11,11 @@ var wordRx = regexp.MustCompile(`(?i)\A[a-z]{3,}\z`)
 type TypoFinder struct {
 	word       string
 	wordTypoRx *regexp.Regexp
+}
+
+type Typo struct {
+	S     string
+	Index int
 }
 
 func NewTypoFinder(word string) (*TypoFinder, error) {
@@ -42,30 +46,25 @@ func NewTypoFinder(word string) (*TypoFinder, error) {
 	}, nil
 }
 
-func (tf *TypoFinder) FindTypos(s string) []string {
-	m := tf.wordTypoRx.FindAllString(s, -1)
+func (tf *TypoFinder) FindTypos(s string) []Typo {
+	m := tf.wordTypoRx.FindAllStringIndex(s, -1)
 	if len(m) == 0 {
 		return nil
 	}
 
-	uniqueGenuineTypos := make(map[string]struct{})
-	for _, typo := range m {
-		typo = strings.ToLower(typo)
-		if typo == tf.word { // Remove false positives.
+	var typos []Typo
+	for _, indexes := range m {
+		typoStr := strings.ToLower(s[indexes[0]:indexes[1]])
+		if typoStr == tf.word { // Remove false positives.
 			continue
 		}
-		uniqueGenuineTypos[typo] = struct{}{}
+		typo := Typo{
+			S:     typoStr,
+			Index: indexes[0],
+		}
+		typos = append(typos, typo)
 	}
-	if len(uniqueGenuineTypos) == 0 {
-		return nil
-	}
-
-	sortedTypos := make([]string, 0, len(uniqueGenuineTypos))
-	for typo := range uniqueGenuineTypos {
-		sortedTypos = append(sortedTypos, typo)
-	}
-	sort.Strings(sortedTypos)
-	return sortedTypos
+	return typos
 }
 
 func appendAddRegexpStrs(regexpStrs []string, runes []rune) []string {

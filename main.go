@@ -33,14 +33,16 @@ func printTyposInFile(tf *TypoFinder, path string) error {
 	for s.Scan() {
 		lineNumber++
 		if typos := tf.FindTypos(s.Text()); len(typos) > 0 {
-			switch *format {
-			case "github-actions":
-				if _, err := fmt.Printf("::warning file=%s,line=%d::Typo(s) of %s: %s\n", path, lineNumber, tf.word, strings.Join(typos, ",")); err != nil {
-					return err
-				}
-			default:
-				if _, err := fmt.Printf("%s:%d: %s\n", path, lineNumber, strings.Join(typos, ",")); err != nil {
-					return err
+			for _, typo := range typos {
+				switch *format {
+				case "github-actions":
+					if _, err := fmt.Printf("::warning file=%s,line=%d,col=%d::%s: typo of %s\n", path, lineNumber, typo.Index+1, typo.S, tf.word); err != nil {
+						return err
+					}
+				default:
+					if _, err := fmt.Printf("%s:%d:%d: %s\n", path, lineNumber, typo.Index+1, typo.S); err != nil {
+						return err
+					}
 				}
 			}
 		}
@@ -56,14 +58,16 @@ func printTyposInStdin(tf *TypoFinder) error {
 	for s.Scan() {
 		lineNumber++
 		if typos := tf.FindTypos(s.Text()); len(typos) > 0 {
-			switch *format {
-			case "github-actions":
-				if _, err := fmt.Printf("::warning line=%d::Typo(s) of %s: %s\n", lineNumber, tf.word, strings.Join(typos, ",")); err != nil {
-					return err
-				}
-			default:
-				if _, err := fmt.Printf("%d: %s\n", lineNumber, strings.Join(typos, ",")); err != nil {
-					return err
+			for _, typo := range typos {
+				switch *format {
+				case "github-actions":
+					if _, err := fmt.Printf("::warning line=%d,col=%d::%s: typo of %s\n", lineNumber, typo.Index+1, typo.S, tf.word); err != nil {
+						return err
+					}
+				default:
+					if _, err := fmt.Printf("%d:%d: %s\n", lineNumber, typo.Index+1, typo.S); err != nil {
+						return err
+					}
 				}
 			}
 		}

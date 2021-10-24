@@ -41,8 +41,8 @@ Running findtypos prints:
 
 ```console
 $ findtypos findtypos example.txt
-example.txt:3: fyndtypos
-example.txt:5: finddtypos
+example.txt:3:1: fyndtypos
+example.txt:5:14: finddtypos
 ```
 
 In general, you would run findtypos in the root of your project as a CI step,
