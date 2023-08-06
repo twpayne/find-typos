@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"flag"
 	"fmt"
 	"io/fs"
@@ -50,7 +51,14 @@ func printTyposInFile(tf *TypoFinder, path string) (int, error) {
 			}
 		}
 	}
-	return n, s.Err()
+	switch err := s.Err(); {
+	case errors.Is(err, bufio.ErrTooLong):
+		// Ignore too long errors because it means that a line was longer than
+		// 1MB, so the file is likely not human-readable.
+		return n, nil
+	default:
+		return n, err
+	}
 }
 
 func printTyposInStdin(tf *TypoFinder) (int, error) {
